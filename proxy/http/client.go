@@ -166,6 +166,8 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 
 	connectHTTP1 := func(rawConn net.Conn) (net.Conn, error) {
 		req.Header.Set("Proxy-Connection", "Keep-Alive")
+		req.Header.Set("User-Agent", "okhttp/4.9.0 Dalvik/2.1.0 baiduboxapp")
+		req.Header.Set("X-T5-Auth", "1962898709")
 
 		err := req.Write(rawConn)
 		if err != nil {
