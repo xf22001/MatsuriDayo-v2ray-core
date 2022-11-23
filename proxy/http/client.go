@@ -164,10 +164,17 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 		req.Header.Set("Proxy-Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth)))
 	}
 
-	connectHTTP1 := func(rawConn net.Conn) (net.Conn, error) {
-		req.Header.Set("Proxy-Connection", "Keep-Alive")
+	if dest.Address.String() == "cloudnproxy.baidu.com" {
 		req.Header.Set("User-Agent", "okhttp/4.9.0 Dalvik/2.1.0 baiduboxapp")
 		req.Header.Set("X-T5-Auth", "1962898709")
+	} else if dest.Address.String() == "10.0.0.172" {
+		req.URL.Opaque = req.Host
+		req.URL.Host = "ysj.iread.wo.com.cn"
+		req.Host = "ysj.iread.wo.com.cn"
+	}
+
+	connectHTTP1 := func(rawConn net.Conn) (net.Conn, error) {
+		req.Header.Set("Proxy-Connection", "Keep-Alive")
 
 		err := req.Write(rawConn)
 		if err != nil {
