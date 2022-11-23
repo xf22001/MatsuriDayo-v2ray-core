@@ -170,8 +170,8 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 	} else if dest.Address.String() == "10.0.0.172" {
 		//视频彩铃 m.10155.com
 		//3G门户 ysj.iread.wo.com.cn
-		//手机电视 http://live.v.wo.cn
-		//彩信 http://mmsc.myuni.com.cn
+		//手机电视 live.v.wo.cn
+		//彩信 mmsc.myuni.com.cn
 		req.URL.Opaque = req.Host + ":Host:ysj.iread.wo.com.cn"
 		req.URL.Host = "ysj.iread.wo.com.cn"
 		req.Host = "ysj.iread.wo.com.cn"
