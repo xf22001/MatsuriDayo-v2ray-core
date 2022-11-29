@@ -164,10 +164,11 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 		req.Header.Set("Proxy-Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth)))
 	}
 
-	if dest.Address.String() == "cloudnproxy.baidu.com" {
+	destAddr := dest.Address.String()
+	if destAddr == "cloudnproxy.baidu.com" {
 		req.Header.Set("User-Agent", "okhttp/4.9.0 Dalvik/2.1.0 baiduboxapp")
 		req.Header.Set("X-T5-Auth", "1962898709")
-	} else if dest.Address.String() == "10.0.0.172" {
+	} else if destAddr == "10.0.0.172" {
 		//视频彩铃 m.10155.com
 		//3G门户 ysj.iread.wo.com.cn
 		//手机电视 live.v.wo.cn
