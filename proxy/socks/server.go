@@ -196,15 +196,17 @@ func (s *Server) handleUDPPayload(ctx context.Context, conn internet.Connection,
 		udpDispatcherConstructor = packetAddrDispatcherFactory.NewPacketAddrDispatcher
 	}
 	udpServer := udpDispatcherConstructor(dispatcher, func(ctx context.Context, packet *udp_proto.Packet) {
+		// downlink callback
 		payload := packet.Payload
 
-		request := protocol.RequestHeaderFromContext(ctx)
 		var packetSource net.Destination
-		if request == nil {
+		// extract packetSource(endpoint) from XUDP or packetaddr
+		if payload.Endpoint == nil {
 			packetSource = packet.Source
 		} else {
-			packetSource = net.UDPDestination(request.Address, request.Port)
+			packetSource = *payload.Endpoint
 		}
+		// encode endpoint to socks5 udp packet
 		udpMessage, err := EncodeUDPPacketFromAddress(packetSource, payload.Bytes())
 		payload.Release()
 
