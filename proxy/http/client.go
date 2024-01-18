@@ -201,7 +201,6 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 		req.Header.Set("Proxy-Connection", "Keep-Alive")
 
 		if req.Header.Get("X-T5-Auth") == "bd_x_t5_auth" {
-			req.Header.Del("bdzl_token")
 			buf := new(bytes.Buffer)
 			err := req.Write(buf)
 			if err != nil {
