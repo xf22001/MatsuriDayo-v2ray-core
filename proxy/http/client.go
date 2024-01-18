@@ -2,12 +2,15 @@ package http
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 	"sync"
 
 	"golang.org/x/net/http2"
@@ -180,7 +183,7 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 	destAddr := dest.Address.String()
 	if destAddr == "cloudnproxy.baidu.com" {
 		req.Header.Set("User-Agent", "okhttp/4.9.0 Dalvik/2.1.0 baiduboxapp")
-		req.Header.Set("X-T5-Auth", createXT5Auth(destAddr))
+		req.Header.Set("X-T5-Auth", "bd_x_t5_auth")
 	} else if destAddr == "10.0.0.172" {
 		//视频彩铃 m.10155.com
 		//3G门户 ysj.iread.wo.com.cn
@@ -191,16 +194,45 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 		req.Host = "ysj.iread.wo.com.cn"
 	} else {
 		req.Header.Set("User-Agent", "okhttp/4.9.0 Dalvik/2.1.0 baiduboxapp")
-		req.Header.Set("X-T5-Auth", createXT5Auth(destAddr))
+		req.Header.Set("X-T5-Auth", "bd_x_t5_auth")
 	}
 
 	connectHTTP1 := func(rawConn net.Conn) (net.Conn, error) {
 		req.Header.Set("Proxy-Connection", "Keep-Alive")
 
-		err := req.Write(rawConn)
-		if err != nil {
-			rawConn.Close()
-			return nil, err
+		if req.Header.Get("X-T5-Auth") == "bd_x_t5_auth" {
+			req.Header.Del("bdzl_token")
+			buf := new(bytes.Buffer)
+			err := req.Write(buf)
+			if err != nil {
+				rawConn.Close()
+				return nil, err
+			}
+
+			s := buf.String()
+			// log.Println("xf22001-bdzl before:", s)
+			pattern := `Host: ([^:]+)(:)?(\d+)?\r\n`
+			re := regexp.MustCompile(pattern)
+			match := re.FindStringSubmatch(s)
+			if len(match) == 4 {
+				s = strings.Replace(s, match[0], "Host: "+match[1]+"\r\n", 1)
+				s = strings.Replace(s, "X-T5-Auth: bd_x_t5_auth", "X-T5-Auth: "+createXT5Auth(match[1]), 1)
+			}
+			// log.Println("xf22001-bdzl after:", s)
+
+			buf = bytes.NewBufferString(s)
+
+			_, err = buf.WriteTo(rawConn)
+			if err != nil {
+				rawConn.Close()
+				return nil, err
+			}
+		} else {
+			err := req.Write(rawConn)
+			if err != nil {
+				rawConn.Close()
+				return nil, err
+			}
 		}
 
 		resp, err := http.ReadResponse(bufio.NewReader(rawConn), req)
