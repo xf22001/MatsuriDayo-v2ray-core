@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -149,6 +150,18 @@ func (c *Client) Process(ctx context.Context, link *transport.Link, dialer inter
 	return nil
 }
 
+func createXT5Auth(address string) string {
+	var index int32 = 0
+	for _, char := range address {
+		index = (index * 1318293 & 0x7FFFFFFF) + int32(char)
+	}
+	if index < 0 {
+		index = index & 0x7FFFFFFF
+	}
+	verify := fmt.Sprintf("%d", index)
+	return verify
+}
+
 // setUpHTTPTunnel will create a socket tunnel via HTTP CONNECT method
 func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, user *protocol.MemoryUser, dialer internet.Dialer, firstPayload []byte) (net.Conn, error) {
 	req := &http.Request{
@@ -167,7 +180,7 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 	destAddr := dest.Address.String()
 	if destAddr == "cloudnproxy.baidu.com" {
 		req.Header.Set("User-Agent", "okhttp/4.9.0 Dalvik/2.1.0 baiduboxapp")
-		req.Header.Set("X-T5-Auth", "1962898709")
+		req.Header.Set("X-T5-Auth", createXT5Auth(destAddr))
 	} else if destAddr == "10.0.0.172" {
 		//视频彩铃 m.10155.com
 		//3G门户 ysj.iread.wo.com.cn
@@ -178,7 +191,7 @@ func setUpHTTPTunnel(ctx context.Context, dest net.Destination, target string, u
 		req.Host = "ysj.iread.wo.com.cn"
 	} else {
 		req.Header.Set("User-Agent", "okhttp/4.9.0 Dalvik/2.1.0 baiduboxapp")
-		req.Header.Set("X-T5-Auth", "1962898709")
+		req.Header.Set("X-T5-Auth", createXT5Auth(destAddr))
 	}
 
 	connectHTTP1 := func(rawConn net.Conn) (net.Conn, error) {
